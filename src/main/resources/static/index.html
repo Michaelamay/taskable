@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taskable</title>
+    <style>
+        :root {
+            --bg: #f4efe6;
+            --panel: rgba(255, 250, 242, 0.92);
+            --panel-strong: #fffaf2;
+            --ink: #1f2933;
+            --muted: #6b7280;
+            --accent: #0f766e;
+            --accent-dark: #115e59;
+            --danger: #b42318;
+            --border: rgba(31, 41, 51, 0.12);
+            --shadow: 0 20px 45px rgba(70, 52, 24, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(180, 35, 24, 0.12), transparent 25%),
+                linear-gradient(180deg, #f7f2e9 0%, #efe6d7 100%);
+        }
+
+        .page {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 32px 0 48px;
+        }
+
+        .hero {
+            margin-bottom: 28px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(255, 250, 242, 0.95), rgba(241, 233, 219, 0.88));
+            box-shadow: var(--shadow);
+        }
+
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2.3rem, 4vw, 4rem);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 720px;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 24px;
+        }
+
+        .panel {
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 20px 22px 10px;
+        }
+
+        .panel-header h2,
+        .panel-header h3 {
+            margin: 0 0 6px;
+            font-size: 1.3rem;
+        }
+
+        .panel-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .panel-body {
+            padding: 0 22px 22px;
+        }
+
+        .status-bar {
+            margin: 0 0 18px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--accent-dark);
+            font-size: 0.95rem;
+        }
+
+        .status-bar.error {
+            background: rgba(180, 35, 24, 0.1);
+            color: var(--danger);
+        }
+
+        .task-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .task-card,
+        .result-card {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--panel-strong);
+            padding: 16px;
+        }
+
+        .task-card-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .task-card h3 {
+            margin: 0 0 8px;
+            font-size: 1.05rem;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0 0;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--accent-dark);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .chip.priority-HIGH {
+            background: rgba(180, 35, 24, 0.12);
+            color: var(--danger);
+        }
+
+        .chip.priority-MEDIUM {
+            background: rgba(180, 121, 24, 0.14);
+            color: #8a4b0f;
+        }
+
+        .chip.priority-LOW {
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--accent-dark);
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        input,
+        textarea,
+        select,
+        button {
+            font: inherit;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid rgba(31, 41, 51, 0.14);
+            border-radius: 14px;
+            background: #fffdf9;
+            color: var(--ink);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 16px;
+            cursor: pointer;
+            background: var(--accent);
+            color: white;
+            font-weight: 700;
+            transition: transform 140ms ease, background 140ms ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            background: var(--accent-dark);
+        }
+
+        button.delete {
+            background: rgba(180, 35, 24, 0.92);
+        }
+
+        button.delete:hover {
+            background: #8f1d14;
+        }
+
+        .tool-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .empty {
+            padding: 22px;
+            border: 1px dashed rgba(31, 41, 51, 0.2);
+            border-radius: 18px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .subtasks {
+            margin: 10px 0 0;
+            padding-left: 20px;
+        }
+
+        .subtasks li + li {
+            margin-top: 6px;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        @media (max-width: 920px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: min(100% - 20px, 1180px);
+                padding-top: 20px;
+            }
+
+            .hero,
+            .panel-header,
+            .panel-body {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .task-card-head {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <section class="hero">
+        <h1>Taskable</h1>
+        <p>Manage tasks, draft structured items from plain English, and use AI summaries and breakdowns against your Spring Boot API running on <code>http://localhost:8080</code>.</p>
+    </section>
+
+    <div class="layout">
+        <div class="stack">
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Task List</h2>
+                    <p>Loaded from <code>GET /tasks</code>. Delete actions call <code>DELETE /tasks/{id}</code>.</p>
+                </div>
+                <div class="panel-body">
+                    <div id="task-status" class="status-bar">Loading tasks...</div>
+                    <div id="task-list" class="task-list"></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Create Task</h2>
+                    <p>Submits to <code>POST /tasks</code>.</p>
+                </div>
+                <div class="panel-body">
+                    <div id="create-status" class="status-bar" hidden></div>
+                    <form id="create-task-form">
+                        <label>
+                            Title
+                            <input type="text" name="title" required>
+                        </label>
+                        <label>
+                            Description
+                            <textarea name="description" placeholder="Optional notes or details"></textarea>
+                        </label>
+                        <div class="grid-2">
+                            <label>
+                                Due Date
+                                <input type="date" name="dueDate">
+                            </label>
+                            <label>
+                                Priority
+                                <select name="priority" required>
+                                    <option value="LOW">LOW</option>
+                                    <option value="MEDIUM">MEDIUM</option>
+                                    <option value="HIGH">HIGH</option>
+                                </select>
+                            </label>
+                        </div>
+                        <label>
+                            Status
+                            <select name="status" required>
+                                <option value="TODO">TODO</option>
+                                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                                <option value="DONE">DONE</option>
+                            </select>
+                        </label>
+                        <button type="submit">Create Task</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>AI Tools</h2>
+                <p>Uses the task suggestion, summary, and breakdown endpoints without saving AI output automatically.</p>
+            </div>
+            <div class="panel-body">
+                <div class="tool-grid">
+                    <section class="result-card">
+                        <div class="panel-header" style="padding: 0 0 12px;">
+                            <h3>Suggest Task</h3>
+                            <p><code>POST /tasks/suggest</code></p>
+                        </div>
+                        <div id="suggest-status" class="status-bar" hidden></div>
+                        <form id="suggest-form">
+                            <label>
+                                Plain English Description
+                                <textarea name="description" required placeholder="Example: Remind me to draft a project brief by next Friday with high priority."></textarea>
+                            </label>
+                            <button type="submit">Generate Suggestion</button>
+                        </form>
+                        <div id="suggest-result" class="empty" style="margin-top: 14px;">Suggestion result will appear here.</div>
+                    </section>
+
+                    <section class="result-card">
+                        <div class="panel-header" style="padding: 0 0 12px;">
+                            <h3>Summarize Task</h3>
+                            <p><code>POST /tasks/{id}/summarize</code></p>
+                        </div>
+                        <div id="summary-status" class="status-bar" hidden></div>
+                        <form id="summary-form">
+                            <label>
+                                Task ID
+                                <input type="number" name="id" min="1" required placeholder="Enter an existing task id">
+                            </label>
+                            <button type="submit">Get Summary</button>
+                        </form>
+                        <div id="summary-result" class="empty" style="margin-top: 14px;">Summary text will appear here.</div>
+                    </section>
+
+                    <section class="result-card">
+                        <div class="panel-header" style="padding: 0 0 12px;">
+                            <h3>Break Down Task</h3>
+                            <p><code>POST /tasks/{id}/breakdown</code></p>
+                        </div>
+                        <div id="breakdown-status" class="status-bar" hidden></div>
+                        <form id="breakdown-form">
+                            <label>
+                                Task ID
+                                <input type="number" name="id" min="1" required placeholder="Enter an existing task id">
+                            </label>
+                            <button type="submit">Break Into Subtasks</button>
+                        </form>
+                        <div id="breakdown-result" class="empty" style="margin-top: 14px;">Subtasks will appear here.</div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    const API_BASE = "http://localhost:8080";
+
+    const taskListEl = document.getElementById("task-list");
+    const taskStatusEl = document.getElementById("task-status");
+
+    const createForm = document.getElementById("create-task-form");
+    const createStatusEl = document.getElementById("create-status");
+
+    const suggestForm = document.getElementById("suggest-form");
+    const suggestStatusEl = document.getElementById("suggest-status");
+    const suggestResultEl = document.getElementById("suggest-result");
+
+    const summaryForm = document.getElementById("summary-form");
+    const summaryStatusEl = document.getElementById("summary-status");
+    const summaryResultEl = document.getElementById("summary-result");
+
+    const breakdownForm = document.getElementById("breakdown-form");
+    const breakdownStatusEl = document.getElementById("breakdown-status");
+    const breakdownResultEl = document.getElementById("breakdown-result");
+
+    async function apiFetch(path, options = {}) {
+        const response = await fetch(`${API_BASE}${path}`, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            },
+            ...options
+        });
+
+        if (response.status === 204) {
+            return null;
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        const body = contentType.includes("application/json")
+            ? await response.json()
+            : await response.text();
+
+        if (!response.ok) {
+            const message = typeof body === "string"
+                ? body
+                : body.message || body.detail || JSON.stringify(body);
+            throw new Error(message || `Request failed with status ${response.status}`);
+        }
+
+        return body;
+    }
+
+    function setStatus(element, message, isError = false, hidden = false) {
+        element.hidden = hidden;
+        element.textContent = message;
+        element.classList.toggle("error", isError);
+    }
+
+    function normalizeOptional(value) {
+        return value && value.trim() ? value.trim() : null;
+    }
+
+    function renderTasks(tasks) {
+        if (!tasks.length) {
+            taskListEl.innerHTML = '<div class="empty">No tasks yet. Create one to get started.</div>';
+            return;
+        }
+
+        taskListEl.innerHTML = tasks.map((task) => {
+            const description = task.description
+                ? `<p class="muted">${escapeHtml(task.description)}</p>`
+                : "";
+
+            return `
+                <article class="task-card">
+                    <div class="task-card-head">
+                        <div>
+                            <h3>${escapeHtml(task.title)}</h3>
+                            ${description}
+                            <div class="meta">
+                                <span class="chip priority-${escapeHtml(task.priority)}">Priority: ${escapeHtml(task.priority)}</span>
+                                <span class="chip">Status: ${escapeHtml(task.status)}</span>
+                                <span class="chip">Due: ${escapeHtml(task.dueDate || "None")}</span>
+                            </div>
+                        </div>
+                        <button class="delete" type="button" data-task-id="${task.id}">Delete</button>
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    async function loadTasks() {
+        setStatus(taskStatusEl, "Loading tasks...");
+        try {
+            const tasks = await apiFetch("/tasks", { method: "GET" });
+            renderTasks(tasks);
+            setStatus(taskStatusEl, `Loaded ${tasks.length} task${tasks.length === 1 ? "" : "s"}.`);
+        } catch (error) {
+            taskListEl.innerHTML = '<div class="empty">Could not load tasks.</div>';
+            setStatus(taskStatusEl, error.message, true);
+        }
+    }
+
+    function renderSuggestionCard(suggestion) {
+        suggestResultEl.className = "result-card";
+        suggestResultEl.innerHTML = `
+            <h3>${escapeHtml(suggestion.title || "Untitled")}</h3>
+            <p class="muted">${escapeHtml(suggestion.description || "No description provided.")}</p>
+            <div class="meta">
+                <span class="chip priority-${escapeHtml(suggestion.priority || "LOW")}">Priority: ${escapeHtml(suggestion.priority || "LOW")}</span>
+                <span class="chip">Status: ${escapeHtml(suggestion.status || "TODO")}</span>
+                <span class="chip">Due: ${escapeHtml(suggestion.dueDate || "None")}</span>
+            </div>
+        `;
+    }
+
+    function renderBreakdown(breakdown) {
+        const subtasks = Array.isArray(breakdown.subtasks) ? breakdown.subtasks : [];
+        if (!subtasks.length) {
+            breakdownResultEl.className = "empty";
+            breakdownResultEl.textContent = "No subtasks were returned.";
+            return;
+        }
+
+        breakdownResultEl.className = "result-card";
+        breakdownResultEl.innerHTML = `
+            <h3>Suggested Subtasks</h3>
+            <ul class="subtasks">
+                ${subtasks.map((subtask) => `<li>${escapeHtml(subtask)}</li>`).join("")}
+            </ul>
+        `;
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    taskListEl.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-task-id]");
+        if (!button) {
+            return;
+        }
+
+        const taskId = button.dataset.taskId;
+        button.disabled = true;
+        try {
+            await apiFetch(`/tasks/${taskId}`, { method: "DELETE" });
+            setStatus(taskStatusEl, `Deleted task ${taskId}.`);
+            await loadTasks();
+        } catch (error) {
+            button.disabled = false;
+            setStatus(taskStatusEl, error.message, true);
+        }
+    });
+
+    createForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(createForm);
+        const payload = {
+            title: formData.get("title").trim(),
+            description: normalizeOptional(formData.get("description")),
+            dueDate: normalizeOptional(formData.get("dueDate")),
+            priority: formData.get("priority"),
+            status: formData.get("status")
+        };
+
+        setStatus(createStatusEl, "Creating task...");
+        try {
+            const createdTask = await apiFetch("/tasks", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            createForm.reset();
+            createForm.priority.value = "LOW";
+            createForm.status.value = "TODO";
+            setStatus(createStatusEl, `Created task #${createdTask.id}: ${createdTask.title}`);
+            await loadTasks();
+        } catch (error) {
+            setStatus(createStatusEl, error.message, true);
+        }
+    });
+
+    suggestForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(suggestForm);
+        const payload = {
+            description: formData.get("description").trim()
+        };
+
+        setStatus(suggestStatusEl, "Generating suggestion...");
+        try {
+            const suggestion = await apiFetch("/tasks/suggest", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            renderSuggestionCard(suggestion);
+            setStatus(suggestStatusEl, "Suggestion ready.");
+        } catch (error) {
+            setStatus(suggestStatusEl, error.message, true);
+            suggestResultEl.className = "empty";
+            suggestResultEl.textContent = "Suggestion result will appear here.";
+        }
+    });
+
+    summaryForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(summaryForm);
+        const id = formData.get("id");
+
+        setStatus(summaryStatusEl, `Summarizing task ${id}...`);
+        try {
+            const summary = await apiFetch(`/tasks/${id}/summarize`, { method: "POST" });
+            summaryResultEl.className = "result-card";
+            summaryResultEl.textContent = summary;
+            setStatus(summaryStatusEl, "Summary ready.");
+        } catch (error) {
+            setStatus(summaryStatusEl, error.message, true);
+            summaryResultEl.className = "empty";
+            summaryResultEl.textContent = "Summary text will appear here.";
+        }
+    });
+
+    breakdownForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(breakdownForm);
+        const id = formData.get("id");
+
+        setStatus(breakdownStatusEl, `Breaking down task ${id}...`);
+        try {
+            const breakdown = await apiFetch(`/tasks/${id}/breakdown`, { method: "POST" });
+            renderBreakdown(breakdown);
+            setStatus(breakdownStatusEl, "Breakdown ready.");
+        } catch (error) {
+            setStatus(breakdownStatusEl, error.message, true);
+            breakdownResultEl.className = "empty";
+            breakdownResultEl.textContent = "Subtasks will appear here.";
+        }
+    });
+
+    loadTasks();
+</script>
+</body>
+</html>
