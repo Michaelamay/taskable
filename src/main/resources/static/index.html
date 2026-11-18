@@ -147,6 +147,13 @@
             margin: 10px 0 0;
         }
 
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
         .chip {
             display: inline-flex;
             align-items: center;
@@ -239,6 +246,15 @@
             background: #8f1d14;
         }
 
+        button.secondary {
+            background: rgba(15, 118, 110, 0.14);
+            color: var(--accent-dark);
+        }
+
+        button.secondary:hover {
+            background: rgba(15, 118, 110, 0.22);
+        }
+
         .tool-grid {
             display: grid;
             gap: 16px;
@@ -299,7 +315,7 @@
 <div class="page">
     <section class="hero">
         <h1>Taskable</h1>
-        <p>Manage tasks, draft structured items from plain English, and use AI summaries and breakdowns against your Spring Boot API running on <code>http://localhost:8080</code>.</p>
+        <p>Manage tasks, draft structured items from plain English, and use AI summaries and breakdowns against the Spring Boot API served by this app.</p>
     </section>
 
     <div class="layout">
@@ -420,7 +436,7 @@
 </div>
 
 <script>
-    const API_BASE = "http://localhost:8080";
+    const API_BASE = window.location.origin;
 
     const taskListEl = document.getElementById("task-list");
     const taskStatusEl = document.getElementById("task-status");
@@ -496,9 +512,14 @@
                             <h3>${escapeHtml(task.title)}</h3>
                             ${description}
                             <div class="meta">
+                                <span class="chip">ID: ${escapeHtml(task.id)}</span>
                                 <span class="chip priority-${escapeHtml(task.priority)}">Priority: ${escapeHtml(task.priority)}</span>
                                 <span class="chip">Status: ${escapeHtml(task.status)}</span>
                                 <span class="chip">Due: ${escapeHtml(task.dueDate || "None")}</span>
+                            </div>
+                            <div class="actions">
+                                <button class="secondary" type="button" data-summary-id="${task.id}">Summarize</button>
+                                <button class="secondary" type="button" data-breakdown-id="${task.id}">Break Down</button>
                             </div>
                         </div>
                         <button class="delete" type="button" data-task-id="${task.id}">Delete</button>
@@ -561,19 +582,52 @@
 
     taskListEl.addEventListener("click", async (event) => {
         const button = event.target.closest("button[data-task-id]");
-        if (!button) {
+        if (button) {
+            const taskId = button.dataset.taskId;
+            button.disabled = true;
+            try {
+                await apiFetch(`/tasks/${taskId}`, { method: "DELETE" });
+                setStatus(taskStatusEl, `Deleted task ${taskId}.`);
+                await loadTasks();
+            } catch (error) {
+                button.disabled = false;
+                setStatus(taskStatusEl, error.message, true);
+            }
             return;
         }
 
-        const taskId = button.dataset.taskId;
-        button.disabled = true;
-        try {
-            await apiFetch(`/tasks/${taskId}`, { method: "DELETE" });
-            setStatus(taskStatusEl, `Deleted task ${taskId}.`);
-            await loadTasks();
-        } catch (error) {
-            button.disabled = false;
-            setStatus(taskStatusEl, error.message, true);
+        const summaryButton = event.target.closest("button[data-summary-id]");
+        if (summaryButton) {
+            const taskId = summaryButton.dataset.summaryId;
+            summaryForm.id.value = taskId;
+            setStatus(summaryStatusEl, `Summarizing task ${taskId}...`);
+            try {
+                const summary = await apiFetch(`/tasks/${taskId}/summarize`, { method: "POST" });
+                summaryResultEl.className = "result-card";
+                summaryResultEl.textContent = summary;
+                setStatus(summaryStatusEl, `Summary ready for task ${taskId}.`);
+            } catch (error) {
+                setStatus(summaryStatusEl, error.message, true);
+                summaryResultEl.className = "empty";
+                summaryResultEl.textContent = "Summary text will appear here.";
+            }
+            return;
+        }
+
+        const breakdownButton = event.target.closest("button[data-breakdown-id]");
+        if (breakdownButton) {
+            const taskId = breakdownButton.dataset.breakdownId;
+            breakdownForm.id.value = taskId;
+            setStatus(breakdownStatusEl, `Breaking down task ${taskId}...`);
+            try {
+                const breakdown = await apiFetch(`/tasks/${taskId}/breakdown`, { method: "POST" });
+                renderBreakdown(breakdown);
+                setStatus(breakdownStatusEl, `Breakdown ready for task ${taskId}.`);
+            } catch (error) {
+                setStatus(breakdownStatusEl, error.message, true);
+                breakdownResultEl.className = "empty";
+                breakdownResultEl.textContent = "Subtasks will appear here.";
+            }
         }
     });
 

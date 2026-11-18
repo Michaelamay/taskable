@@ -1,0 +1,35 @@
+# fly.toml app configuration file generated for taskable on 2026-08-06T08:20:35-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'taskable'
+primary_region = 'iad'
+
+[build]
+[env]
+  ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
+  ANTHROPIC_API_VERSION = '2023-06-01'
+  SPRING_PROFILES_ACTIVE = 'fly'
+
+[[mounts]]
+  source = 'taskable_data'
+  destination = '/data'
+  snapshot_retention = 7
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = 'requests'
+    hard_limit = 250
+    soft_limit = 200
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 512
